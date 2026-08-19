@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lvens — Photography</title>
+<meta name="description" content="lvens — personal photography hobby gallery, shot on phone.">
+
+<!--
+  ============================================================
+  HOW TO ADD YOUR OWN PHOTOS
+  ============================================================
+  This file expects an "images" folder sitting next to it, with
+  all 141 photos from your "lvens" folder copied in as-is
+  (original filenames, e.g. lvens_DacwNtDMF7u.jpg). The full
+  file list is baked into the WORK array in the script below, so
+  you don't need to rename anything — just copy the files over:
+
+    /html
+      index.html
+      /images
+        lvens_DacwNtDMF7u.jpg
+        lvens_DaDUVuDwQXe.jpg
+        ... (all 141 files, unrenamed)
+
+  The hero and about images still use the generic names hero.jpg
+  and about.jpg — pick your two favorite shots from the set and
+  save copies under those names (or edit heroImg / about-media
+  data-src below to point at one of the real filenames instead).
+  Until real files are present, each slot shows a soft placeholder
+  tile with its index number, so the layout still looks intentional.
+
+  If you're serving this with the nginx build you uploaded, copy
+  this whole folder's contents into nginx-1.28.0/html/, replacing
+  the default index.html, then run nginx.exe and visit
+  http://localhost/
+  ============================================================
+-->
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Inter:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+:root{
+  --bg:        #0c0c0b;
+  --bg-raised: #151412;
+  --ink:       #f1ede3;
+  --muted:     rgba(241,237,227,0.58);
+  --faint:     rgba(241,237,227,0.26);
+  --rule:      rgba(241,237,227,0.10);
+  --accent:    #6d8f80;     /* darkroom safelight teal */
+  --accent-ink:#0c0c0b;
+  --ease: cubic-bezier(.22,.85,.32,1);
+}
+
+*{ margin:0; padding:0; box-sizing:border-box; }
+
+html{ scroll-behavior:smooth; }
+@media (prefers-reduced-motion: reduce){
+  html{ scroll-behavior:auto; }
+  *{ animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important; }
+}
+
+body{
+  background:var(--bg);
+  color:var(--ink);
+  font-family:'Inter',system-ui,-apple-system,sans-serif;
+  font-weight:300;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+
+a{ color:inherit; text-decoration:none; }
+img{ display:block; max-width:100%; }
+
+.eyebrow{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:0.68rem;
+  letter-spacing:0.22em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+.serif{ font-family:'Fraunces',serif; }
+
+/* ---------------------------------------------------------- */
+/* TOP BAR — logo + single menu toggle (replaces a text navbar) */
+/* ---------------------------------------------------------- */
+.topbar{
+  position:fixed; top:0; left:0; right:0; z-index:60;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:1.6rem clamp(1.2rem,4vw,3rem);
+  mix-blend-mode:difference;
+}
+.wordmark{
+  font-family:'Fraunces',serif;
+  font-size:1.05rem;
+  letter-spacing:0.08em;
+  font-weight:500;
+}
+.menu-btn{
+  cursor:pointer;
+  background:none; border:none;
+  display:flex; flex-direction:column; gap:6px;
+  width:34px; padding:6px 0;
+}
+.menu-btn span{
+  display:block; height:1px; width:100%;
+  background:var(--ink);
+  transition:transform 0.4s var(--ease), opacity 0.3s var(--ease);
+}
+.menu-btn .menu-label{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:0.62rem;
+  letter-spacing:0.18em;
+  text-transform:uppercase;
+  margin-top:2px;
+}
+.nav-open .menu-btn span:nth-child(1){ transform:translateY(3.5px) rotate(45deg); }
+.nav-open .menu-btn span:nth-child(2){ transform:translateY(-3.5px) rotate(-45deg); }
+
+/* ---------------------------------------------------------- */
+/* FULLSCREEN NAV OVERLAY */
+/* ---------------------------------------------------------- */
+.nav-overlay{
+  position:fixed; inset:0; z-index:50;
+  background:var(--bg);
+  display:flex; align-items:center;
+  padding:clamp(1.5rem,6vw,5rem);
+  opacity:0; visibility:hidden;
+  transition:opacity 0.55s var(--ease), visibility 0s linear 0.55s;
+}
+.nav-open .nav-overlay{
+  opacity:1; visibility:visible;
+  transition:opacity 0.55s var(--ease);
+}
+.nav-links{ list-style:none; }
+.nav-links li{
+  overflow:hidden;
+}
+.nav-links a{
+  display:inline-block;
+  font-family:'Fraunces',serif;
+  font-weight:300;
+  font-size:clamp(2.4rem,8vw,5.4rem);
+  line-height:1.14;
+  color:var(--faint);
+  transform:translateY(110%);
+  transition:transform 0.6s var(--ease), color 0.3s var(--ease);
+}
+.nav-open .nav-links a{ transform:translateY(0); }
+.nav-links li:nth-child(1) a{ transition-delay:0.05s; }
+.nav-links li:nth-child(2) a{ transition-delay:0.1s; }
+.nav-links li:nth-child(3) a{ transition-delay:0.15s; }
+.nav-links li:nth-child(4) a{ transition-delay:0.2s; }
+.nav-links a:hover, .nav-links a:focus-visible{ color:var(--ink); }
+.nav-links a:hover::after, .nav-links a:focus-visible::after{ opacity:1; }
+.nav-links a{ position:relative; }
+.nav-meta{
+  margin-top:3rem;
+  display:flex; gap:2.4rem;
+  flex-wrap:wrap;
+}
+.nav-meta a{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:0.72rem;
+  letter-spacing:0.08em;
+  color:var(--muted);
+  border-bottom:1px solid var(--rule);
+  padding-bottom:2px;
+}
+.nav-meta a:hover{ color:var(--accent); border-color:var(--accent); }
+
+/* ---------------------------------------------------------- */
+/* HERO */
+/* ---------------------------------------------------------- */
+.hero{
+  position:relative;
+  height:100svh;
+  min-height:560px;
+  display:flex; flex-direction:column; justify-content:flex-end;
+  padding:clamp(1.5rem,5vw,3.5rem);
+  isolation:isolate;
+}
+.hero-media{
+  position:absolute; inset:0; z-index:-1;
+  background:
+    linear-gradient(180deg, rgba(12,12,11,0.15) 0%, rgba(12,12,11,0.75) 82%, var(--bg) 100%),
+    linear-gradient(135deg, #23231f, #0c0c0b 70%);
+}
+.hero-media img{
+  width:100%; height:100%; object-fit:cover;
+  position:absolute; inset:0; z-index:-2;
+  opacity:0;
+  transition:opacity 1.2s var(--ease);
+}
+.hero-media img.loaded{ opacity:1; }
+.hero-media.ph::before{
+  content:'HERO — IMAGES/HERO.JPG';
+  position:absolute; inset:0; z-index:-2;
+  display:flex; align-items:center; justify-content:center;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:0.7rem; letter-spacing:0.15em; color:var(--faint);
+}
+.hero-content{
+  max-width:980px;
+}
+.hero-title{
+  font-family:'Fraunces',serif;
+  font-weight:300;
+  font-size:clamp(2.6rem,7.4vw,6.4rem);
+  line-height:1.02;
+  letter-spacing:-0.01em;
+}
+.hero-title em{ font-style:italic; color:var(--accent); font-weight:400; }
+.hero-sub{
+  margin-top:1.4rem;
+  max-width:36ch;
+  color:var(--muted);
+  font-size:1.02rem;
+  font-weight:300;
+}
+.scroll-cue{
+  position:absolute; right:clamp(1.5rem,5vw,3.5rem); bottom:2.2rem;
+  writing-mode:vertical-rl;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:0.66rem; letter-spacing:0.2em; color:var(--muted);
+  display:flex; align-items:center; gap:0.8rem;
+}
+.scroll-cue::after{
+  content:''; width:1px; height:40px; background:var(--faint);
+  animation:cue 2.4s var(--ease) infinite;
+}
+@keyframes cue{ 0%{ transform:scaleY(0); transform-origin:top; } 50%{ transform:scaleY(1); transform-origin:top; } 51%{ transform-origin:bottom; } 100%{ transform:scaleY(0); transform-origin:bottom; } }
+
+/* ---------------------------------------------------------- */
+/* SECTION SHELL */
+/* ---------------------------------------------------------- */
+section{ padding:clamp(4.5rem,10vw,7.5rem) clamp(1.5rem,5vw,3.5rem); }
+.section-head{
+  display:flex; align-items:flex-end; justify-content:space-between;
+  gap:2rem; flex-wrap:wrap;
+  border-bottom:1px solid var(--rule);
+  padding-bottom:1.6rem;
+  margin-bottom:clamp(2.5rem,6vw,4rem);
+}
+.section-head h2{
+  font-family:'Fraunces',serif;
+  font-weight:300;
+  font-size:clamp(2rem,4.4vw,3.1rem);
+}
+.section-head .count{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:0.72rem;
+  color:var(--muted);
+  letter-spacing:0.08em;
+}
+
+/* reveal-on-scroll */
+.reveal{ opacity:0; transform:translateY(28px); transition:opacity 0.8s var(--ease), transform 0.8s var(--ease); }
+.reveal.in{ opacity:1; transform:translateY(0); }
+
+/* ---------------------------------------------------------- */
+/* WORK GRID */
+/* ---------------------------------------------------------- */
+.grid{
+  column-count:3;
+  column-gap:clamp(1.6rem,3.2vw,3rem);
+}
+.tile{
+  position:relative;
+  overflow:hidden;
+  cursor:pointer;
+  background:var(--bg-raised);
+  break-inside:avoid;
+  margin-bottom:clamp(1.6rem,3.2vw,3rem);
+  display:block;
+}
+.tile img{
+  display:block;
+  width:100%;
+  height:auto;
+  opacity:0;
+  transition:opacity 0.8s var(--ease), transform 0.9s var(--ease);
+}
+.tile img.loaded{ opacity:1; }
+.tile:hover img.loaded{ transform:scale(1.03); }
+.tile .ph{
+  width:100%;
+  aspect-ratio:4/5;
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Fraunces',serif; font-size:2.4rem; color:var(--faint);
+  background:linear-gradient(150deg, #1a1a17, #0c0c0b);
+}
+.tile .cap{
+  position:absolute; left:0; right:0; bottom:0;
+  padding:1.1rem 1.2rem;
+  background:linear-gradient(0deg, rgba(0,0,0,0.72), transparent);
+  transform:translateY(60%);
+  opacity:0;
+  transition:transform 0.4s var(--ease), opacity 0.4s var(--ease);
+}
+.tile:hover .cap, .tile:focus-visible .cap{ transform:translateY(0); opacity:1; }
+.cap .title{ font-family:'Fraunces',serif; font-size:1.15rem; font-style:italic; }
+.cap .exif{
+  margin-top:0.35rem;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:0.66rem; letter-spacing:0.05em; color:var(--muted);
+}
+
+@media (max-width:900px){
+  .grid{ column-count:2; }
+}
+@media (max-width:560px){
+  .grid{ column-count:1; }
+}
+
+/* ---------------------------------------------------------- */
+/* ABOUT */
+/* ---------------------------------------------------------- */
+.about{
+  display:grid;
+  grid-template-columns:0.85fr 1.15fr;
+  gap:clamp(2rem,6vw,5rem);
+  align-items:center;
+}
+.about-media{
+  position:relative;
+  aspect-ratio:4/5;
+  background:linear-gradient(150deg, #1a1a17, #0c0c0b);
+  overflow:hidden;
+}
+.about-media img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity 0.9s var(--ease); }
+.about-media img.loaded{ opacity:1; }
+.about-media .ph{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono',monospace; font-size:0.68rem; letter-spacing:0.15em; color:var(--faint); }
+.about-text p{
+  max-width:52ch;
+  color:var(--muted);
+  font-size:1.05rem;
+  margin-bottom:1.3rem;
+}
+.about-text p:first-of-type{ color:var(--ink); font-size:1.25rem; font-family:'Fraunces',serif; font-weight:300; line-height:1.45; }
+.stat-row{
+  display:flex; gap:clamp(1.6rem,4vw,3rem);
+  margin-top:2.4rem;
+  padding-top:2rem;
+  border-top:1px solid var(--rule);
+  flex-wrap:wrap;
+}
+.stat b{ display:block; font-family:'Fraunces',serif; font-size:1.6rem; font-weight:400; }
+.stat span{ font-family:'IBM Plex Mono',monospace; font-size:0.64rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); }
+
+/* ---------------------------------------------------------- */
+/* CONTACT */
+/* ---------------------------------------------------------- */
+.contact{ text-align:center; }
+.contact-email{
+  font-family:'Fraunces',serif;
+  font-weight:300;
+  font-size:clamp(1.9rem,6vw,4rem);
+  display:inline-block;
+  position:relative;
+  padding-bottom:0.4rem;
+}
+.contact-email::after{
+  content:''; position:absolute; left:0; right:0; bottom:0; height:1px;
+  background:var(--faint);
+  transform:scaleX(1); transform-origin:left;
+  transition:transform 0.4s var(--ease), background 0.4s var(--ease);
+}
+.contact-email:hover::after{ background:var(--accent); }
+.contact-sub{ margin-top:1rem; color:var(--muted); font-size:0.95rem; }
+.social-row{
+  margin-top:2.6rem;
+  display:flex; gap:1.8rem; justify-content:center;
+  font-family:'IBM Plex Mono',monospace; font-size:0.72rem; letter-spacing:0.1em; text-transform:uppercase;
+}
+.social-row a{ color:var(--muted); border-bottom:1px solid transparent; padding-bottom:2px; }
+.social-row a:hover{ color:var(--accent); border-color:var(--accent); }
+
+/* ---------------------------------------------------------- */
+/* FOOTER */
+/* ---------------------------------------------------------- */
+footer{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:1.8rem clamp(1.5rem,5vw,3.5rem) 2.4rem;
+  border-top:1px solid var(--rule);
+  font-family:'IBM Plex Mono',monospace;
+  font-size:0.65rem; letter-spacing:0.08em; color:var(--faint);
+  flex-wrap:wrap; gap:0.8rem;
+}
+footer a{ color:var(--faint); }
+footer a:hover{ color:var(--accent); }
+
+/* ---------------------------------------------------------- */
+/* LIGHTBOX */
+/* ---------------------------------------------------------- */
+.lightbox{
+  position:fixed; inset:0; z-index:80;
+  background:rgba(8,8,7,0.94);
+  display:flex; align-items:center; justify-content:center;
+  padding:3rem;
+  opacity:0; visibility:hidden;
+  transition:opacity 0.35s var(--ease), visibility 0s linear 0.35s;
+}
+.lightbox.on{ opacity:1; visibility:visible; transition:opacity 0.35s var(--ease); }
+.lightbox img{ max-width:100%; max-height:100%; object-fit:contain; box-shadow:0 30px 80px rgba(0,0,0,0.6); }
+.lightbox-close{
+  position:absolute; top:1.8rem; right:clamp(1.5rem,5vw,3rem);
+  background:none; border:none; color:var(--ink); cursor:pointer;
+  font-family:'IBM Plex Mono',monospace; font-size:0.7rem; letter-spacing:0.14em;
+}
+.lightbox-cap{
+  position:absolute; left:0; right:0; bottom:1.8rem;
+  text-align:center;
+  font-family:'IBM Plex Mono',monospace; font-size:0.68rem; color:var(--muted); letter-spacing:0.06em;
+}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <a href="#top" class="wordmark">LVENS</a>
+  <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false">
+    <span></span>
+    <span></span>
+    <span class="menu-label">Menu</span>
+  </button>
+</div>
+
+<!-- FULLSCREEN NAV -->
+<nav class="nav-overlay" id="navOverlay">
+  <div>
+    <ul class="nav-links">
+      <li><a href="#work">Work</a></li>
+      <li><a href="#about">About</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+    <div class="nav-meta">
+      <a href="mailto:xovriet@gmail.com">xovriet@gmail.com</a>
+      <a href="https://instagram.com/Xovriet" target="_blank" rel="noopener">Instagram</a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<header class="hero" id="top">
+  <div class="hero-media ph" id="heroMedia">
+    <img data-src="images/hero.jpg" alt="Featured work" id="heroImg">
+  </div>
+  <div class="hero-content">
+    <p class="eyebrow">Photography — For Fun</p>
+    <h1 class="hero-title">Lvens is a study in <em>light</em>,<br>held still.</h1>
+    <p class="hero-sub">A hobbyist eye, one year in. Shot on phone, still learning as I go.</p>
+  </div>
+  <div class="scroll-cue">SCROLL</div>
+</header>
+
+<!-- WORK -->
+<section id="work">
+  <div class="section-head reveal">
+    <h2>Work</h2>
+    <span class="count" id="workCount">01 — 141 · Shot on phone</span>
+  </div>
+
+  <div class="grid" id="workGrid">
+    <!-- tiles are generated by JS from the WORK array below -->
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="about">
+    <div class="about-media reveal">
+      <div class="ph">IMAGES/ABOUT.JPG</div>
+      <img data-src="images/about.jpg" alt="Portrait">
+    </div>
+    <div class="about-text reveal">
+      <p class="eyebrow" style="margin-bottom:1rem;">About</p>
+      <p>Been shooting for about a year now, just on my phone, purely as a hobby.</p>
+      <p>Still improving — next up is getting an actual camera and working on my editing, both need work. Short term I want to travel more and shoot in Europe, Australia, and New Zealand.</p>
+      <div class="stat-row">
+        <div class="stat"><b>1</b><span>Year shooting</span></div>
+        <div class="stat"><b>141</b><span>Photos shared</span></div>
+        <div class="stat"><b>∞</b><span>Still learning</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact" class="contact">
+  <p class="eyebrow reveal">Say Hi</p>
+  <a href="mailto:xovriet@gmail.com" class="contact-email reveal">xovriet@gmail.com</a>
+  <p class="contact-sub reveal">Just a hobbyist sharing the journey — feel free to reach out or follow along.</p>
+  <div class="social-row reveal">
+    <a href="https://instagram.com/Xovriet" target="_blank" rel="noopener">Instagram</a>
+  </div>
+</section>
+
+<footer>
+  <span>&copy; <span id="year"></span> Lvens</span>
+  <a href="#top">Back to top ↑</a>
+</footer>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" id="lbClose">CLOSE ✕</button>
+  <img id="lbImg" src="" alt="">
+  <div class="lightbox-cap" id="lbCap"></div>
+</div>
+
+<script>
+(function(){
+  document.getElementById('year').textContent = new Date().getFullYear();
+
+  /* ---------- menu toggle ---------- */
+  var menuBtn = document.getElementById('menuBtn');
+  menuBtn.addEventListener('click', function(){
+    var open = document.body.classList.toggle('nav-open');
+    menuBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+  document.querySelectorAll('.nav-links a, .nav-meta a[href^="#"]').forEach(function(a){
+    a.addEventListener('click', function(){ document.body.classList.remove('nav-open'); });
+  });
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape') document.body.classList.remove('nav-open');
+  });
+
+  /* ---------- image loader with placeholder fallback ---------- */
+  function loadImg(imgEl, onOk, onFail){
+    var src = imgEl.getAttribute('data-src');
+    if(!src) return;
+    var test = new Image();
+    test.onload = function(){ imgEl.src = src; imgEl.classList.add('loaded'); if(onOk) onOk(); };
+    test.onerror = function(){ if(onFail) onFail(); };
+    test.src = src;
+  }
+
+  loadImg(document.getElementById('heroImg'), function(){
+    document.getElementById('heroMedia').classList.remove('ph');
+  });
+
+  var aboutImg = document.querySelector('.about-media img');
+  loadImg(aboutImg, function(){ aboutImg.closest('.about-media').querySelector('.ph').style.display='none'; aboutImg.classList.add('loaded'); });
+
+  /* ---------- work data — every file from your Lvens folder ---------- */
+  var WORK = [
+    { file: "lvens_DacwNtDMF7u.jpg", n: 1 },
+    { file: "lvens_DaDUVuDwQXe.jpg", n: 2 },
+    { file: "lvens_DahNQBRhy0x.jpg", n: 3 },
+    { file: "lvens_Daj9bophAxy.jpg", n: 4 },
+    { file: "lvens_DawfVoaB4YW.jpg", n: 5 },
+    { file: "lvens_DbEBZF9hcLS.jpg", n: 6 },
+    { file: "lvens_DbtIx40p2h9.jpg", n: 7 },
+    { file: "lvens_DbtJ4hhp-IV.jpg", n: 8 },
+    { file: "lvens_DbtJjTdPy2I.jpg", n: 9 },
+    { file: "lvens_DbtJtLFPaLb.jpg", n: 10 },
+    { file: "lvens_DbtJXqfNDsp.jpg", n: 11 },
+    { file: "lvens_DbtKMqEh2kv.jpg", n: 12 },
+    { file: "lvens_DbvmYmCtM0M.jpg", n: 13 },
+    { file: "lvens_Dbxoa_ltwaF.jpg", n: 14 },
+    { file: "lvens_Db_ECSIu91J.jpg", n: 15 },
+    { file: "lvens_DOWM88Skhqq.jpg", n: 16 },
+    { file: "lvens_DOWN2xqkrzM.jpg", n: 17 },
+    { file: "lvens_DOWNb7bkg8W.jpg", n: 18 },
+    { file: "lvens_DOWNgKqEiZ2.jpg", n: 19 },
+    { file: "lvens_DOWNHE6klvP.jpg", n: 20 },
+    { file: "lvens_DOWNNyxEs9X.jpg", n: 21 },
+    { file: "lvens_DOWNUY9Emzi.jpg", n: 22 },
+    { file: "lvens_DOWNy2Xkhvm_1.jpg", n: 23 },
+    { file: "lvens_DOWNy2Xkhvm_2.jpg", n: 24 },
+    { file: "lvens_DOWNy2Xkhvm_3.jpg", n: 25 },
+    { file: "lvens_DOWN_-VkmEI_1.jpg", n: 26 },
+    { file: "lvens_DOWN_-VkmEI_2.jpg", n: 27 },
+    { file: "lvens_DOWO23OkoG4.jpg", n: 28 },
+    { file: "lvens_DOWODa3kovX.jpg", n: 29 },
+    { file: "lvens_DOWOoK9kvSd.jpg", n: 30 },
+    { file: "lvens_DOWOSTBkmyv_1.jpg", n: 31 },
+    { file: "lvens_DOWOSTBkmyv_2.jpg", n: 32 },
+    { file: "lvens_DOWOSTBkmyv_3.jpg", n: 33 },
+    { file: "lvens_DOWOSTBkmyv_4.jpg", n: 34 },
+    { file: "lvens_DOWOYHWEscP.jpg", n: 35 },
+    { file: "lvens_DOWP07iEqpO.jpg", n: 36 },
+    { file: "lvens_DOWPaevkny2.jpg", n: 37 },
+    { file: "lvens_DOWPC-yEqVa.jpg", n: 38 },
+    { file: "lvens_DOWPizVEnaF_1.jpg", n: 39 },
+    { file: "lvens_DOWPizVEnaF_2.jpg", n: 40 },
+    { file: "lvens_DOWPld8EraU.jpg", n: 41 },
+    { file: "lvens_DOWPNuCkgP9.jpg", n: 42 },
+    { file: "lvens_DOWPsL7Ehdx.jpg", n: 43 },
+    { file: "lvens_DOWPV1Ckq3g.jpg", n: 44 },
+    { file: "lvens_DOWPw5AElCG.jpg", n: 45 },
+    { file: "lvens_DOWQ1lEEjwW.jpg", n: 46 },
+    { file: "lvens_DOWQ8dRErGf.jpg", n: 47 },
+    { file: "lvens_DOWQD8VErg2_1.jpg", n: 48 },
+    { file: "lvens_DOWQD8VErg2_2.jpg", n: 49 },
+    { file: "lvens_DOWQD8VErg2_3.jpg", n: 50 },
+    { file: "lvens_DOWQD8VErg2_4.jpg", n: 51 },
+    { file: "lvens_DOWQD8VErg2_5.jpg", n: 52 },
+    { file: "lvens_DOWQeKXEsbd.jpg", n: 53 },
+    { file: "lvens_DOWQHKfEvmC.jpg", n: 54 },
+    { file: "lvens_DOWQkRREoHf.jpg", n: 55 },
+    { file: "lvens_DOWRbxFksdh.jpg", n: 56 },
+    { file: "lvens_DOWRGu9kptP.jpg", n: 57 },
+    { file: "lvens_DOWROzAEu2s.jpg", n: 58 },
+    { file: "lvens_DQtyDW2kg8L.jpg", n: 59 },
+    { file: "lvens_DQtyRtvkowL.jpg", n: 60 },
+    { file: "lvens_DQtzgMaEqx-.jpg", n: 61 },
+    { file: "lvens_DSGuE9ekk09.jpg", n: 62 },
+    { file: "lvens_DSGuSI3kkSC.jpg", n: 63 },
+    { file: "lvens_DSKxPDCEikz.jpg", n: 64 },
+    { file: "lvens_DTKBci8koiF.jpg", n: 65 },
+    { file: "lvens_DTKBGmLktZc.jpg", n: 66 },
+    { file: "lvens_DTKBme5EuNG.jpg", n: 67 },
+    { file: "lvens_DTKCBrvkmpr.jpg", n: 68 },
+    { file: "lvens_DTKlAWUkra_.jpg", n: 69 },
+    { file: "lvens_DTKpJ0PklHM.jpg", n: 70 },
+    { file: "lvens_DTncgGWEsmf.jpg", n: 71 },
+    { file: "lvens_DTnS3eREjDN.jpg", n: 72 },
+    { file: "lvens_DTnSpb3Etk0.jpg", n: 73 },
+    { file: "lvens_DTnWkdxkhGF.jpg", n: 74 },
+    { file: "lvens_DTnWr3ZkjJD.jpg", n: 75 },
+    { file: "lvens_DTr9pwDEq3a.jpg", n: 76 },
+    { file: "lvens_DUBgyKCEscx.jpg", n: 77 },
+    { file: "lvens_DUBhtAlEiRN.jpg", n: 78 },
+    { file: "lvens_DUBhZ1tkr9B.jpg", n: 79 },
+    { file: "lvens_DUBi6rwEp5T.jpg", n: 80 },
+    { file: "lvens_DUBii_okmGD.jpg", n: 81 },
+    { file: "lvens_DUBiKR9kulE.jpg", n: 82 },
+    { file: "lvens_DUBjseCEl5g.jpg", n: 83 },
+    { file: "lvens_DUBjSkOEoWQ.jpg", n: 84 },
+    { file: "lvens_DUBkT_ZEk5H.jpg", n: 85 },
+    { file: "lvens_DUBlDQkEk4N.jpg", n: 86 },
+    { file: "lvens_DUBlOi5Egc_.jpg", n: 87 },
+    { file: "lvens_DUBmKnEkreg.jpg", n: 88 },
+    { file: "lvens_DUBmSCYkgys.jpg", n: 89 },
+    { file: "lvens_DUCs8DcEqJA.jpg", n: 90 },
+    { file: "lvens_DUCsYsWkg48.jpg", n: 91 },
+    { file: "lvens_DUCtuh6EtzJ.jpg", n: 92 },
+    { file: "lvens_DUFr9IdEh5h.jpg", n: 93 },
+    { file: "lvens_DUFrwrikmuD.jpg", n: 94 },
+    { file: "lvens_DUn0OspEo2e.jpg", n: 95 },
+    { file: "lvens_DUnzX_GEgnv.jpg", n: 96 },
+    { file: "lvens_DUQjFa0ktIe.jpg", n: 97 },
+    { file: "lvens_DUyEYffEpTU.jpg", n: 98 },
+    { file: "lvens_DVGsH_MkiDC.jpg", n: 99 },
+    { file: "lvens_DVljMKrga_X.jpg", n: 100 },
+    { file: "lvens_DVtVKp0AdTV.jpg", n: 101 },
+    { file: "lvens_DVWNpHDktJu.jpg", n: 102 },
+    { file: "lvens_DV_ItzwD-aD.jpg", n: 103 },
+    { file: "lvens_DWGkGHuia6H.jpg", n: 104 },
+    { file: "lvens_DWvDGGoAduK.jpg", n: 105 },
+    { file: "lvens_DWvZ8jOmppO.jpg", n: 106 },
+    { file: "lvens_DWwgrPsgT8D.jpg", n: 107 },
+    { file: "lvens_DX2BOkxAWTW.jpg", n: 108 },
+    { file: "lvens_DXgR4rrjMW8.jpg", n: 109 },
+    { file: "lvens_DXhfXffCXJh.jpg", n: 110 },
+    { file: "lvens_DXjgfwYFEhJ_1.jpg", n: 111 },
+    { file: "lvens_DXjgfwYFEhJ_2.jpg", n: 112 },
+    { file: "lvens_DXjLKFHlLFk_1.jpg", n: 113 },
+    { file: "lvens_DXjLKFHlLFk_2.jpg", n: 114 },
+    { file: "lvens_DXWbPnQjUA_.jpg", n: 115 },
+    { file: "lvens_DXyXFJwE6wl.jpg", n: 116 },
+    { file: "lvens_DXzBuNcD4EQ.jpg", n: 117 },
+    { file: "lvens_DXzG5REjIDK.jpg", n: 118 },
+    { file: "lvens_DY96wE8yPJz.jpg", n: 119 },
+    { file: "lvens_DYEs8vYiY65.jpg", n: 120 },
+    { file: "lvens_DYFNWlkjO9w.jpg", n: 121 },
+    { file: "lvens_DYj8zU0Npfz.jpg", n: 122 },
+    { file: "lvens_DYjwIPJsNaS.jpg", n: 123 },
+    { file: "lvens_DYlxaKotFQ0.jpg", n: 124 },
+    { file: "lvens_DYmcoXoB63J.jpg", n: 125 },
+    { file: "lvens_DYOa1CkOZnn.jpg", n: 126 },
+    { file: "lvens_DYOcMwzpPLM.jpg", n: 127 },
+    { file: "lvens_DYonNBJJZZQ.jpg", n: 128 },
+    { file: "lvens_DYopF5dsRL3.jpg", n: 129 },
+    { file: "lvens_DYPoT2ESNXF.jpg", n: 130 },
+    { file: "lvens_DYU43WuhlZq.jpg", n: 131 },
+    { file: "lvens_DYU4y39O8Y2.jpg", n: 132 },
+    { file: "lvens_DYuW0QQPOE7.jpg", n: 133 },
+    { file: "lvens_DYz4uWvB-YV.jpg", n: 134 },
+    { file: "lvens_DZF7_ZDhvLR.jpg", n: 135 },
+    { file: "lvens_DZF9EQcBG-3.jpg", n: 136 },
+    { file: "lvens_DZVZAYRB3ZN.jpg", n: 137 },
+    { file: "lvens_DZVZgg4hsFl.jpg", n: 138 },
+    { file: "lvens_DZVZHltBq_k.jpg", n: 139 },
+    { file: "lvens_DZWAXkgh2ce.jpg", n: 140 },
+    { file: "lvens_DZX0T8eBlye.jpg", n: 141 }
+
+  ];
+
+  var grid = document.getElementById('workGrid');
+  var workCount = document.getElementById('workCount');
+  if (workCount) workCount.textContent = '01 — ' + String(WORK.length).padStart(2, '0') + ' · Shot on phone';
+
+  /* Only fetch an image once its tile is about to enter the viewport,
+     instead of firing all 141 requests on page load — this is what
+     makes the grid feel fast. */
+  var lazyObserver = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if(!en.isIntersecting) return;
+      var tile = en.target;
+      var img = tile.querySelector('img');
+      loadImg(img, function(){ tile.querySelector('.ph').style.display='none'; });
+      lazyObserver.unobserve(tile);
+    });
+  }, { rootMargin: '800px 0px' }); /* start loading ~800px before it's on screen */
+
+  WORK.forEach(function(item, i){
+    var num = String(item.n).padStart(3, '0');
+    var tile = document.createElement('div');
+    tile.className = 'tile';
+    tile.tabIndex = 0;
+    tile.innerHTML =
+      '<div class="ph">' + String(i+1).padStart(2,'0') + '</div>' +
+      '<img data-src="images/' + item.file + '" alt="lvens — ' + num + '" loading="lazy" decoding="async">' +
+      '<div class="cap"><div class="title">lvens — ' + num + '</div></div>';
+    grid.appendChild(tile);
+
+    var img = tile.querySelector('img');
+    lazyObserver.observe(tile);
+
+    function open(){
+      var full = img.getAttribute('data-src');
+      lbImg.src = full;
+      lbCap.textContent = 'lvens — ' + num;
+      lightbox.classList.add('on');
+    }
+    tile.addEventListener('click', open);
+    tile.addEventListener('keydown', function(e){ if(e.key === 'Enter') open(); });
+  });
+
+  /* ---------- lightbox ---------- */
+  var lightbox = document.getElementById('lightbox');
+  var lbImg = document.getElementById('lbImg');
+  var lbCap = document.getElementById('lbCap');
+  function closeLb(){ lightbox.classList.remove('on'); lbImg.src=''; }
+  document.getElementById('lbClose').addEventListener('click', closeLb);
+  lightbox.addEventListener('click', function(e){ if(e.target === lightbox) closeLb(); });
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closeLb(); });
+
+  /* ---------- reveal on scroll ---------- */
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){ if(en.isIntersecting){ en.target.classList.add('in'); io.unobserve(en.target); } });
+  }, { threshold: 0.15 });
+  document.querySelectorAll('.reveal').forEach(function(el){ io.observe(el); });
+})();
+</script>
+</body>
+</html>
